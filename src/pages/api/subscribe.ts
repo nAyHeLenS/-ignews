@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-<<<<<<< HEAD
 import { query as q } from 'faunadb';
 import { fauna } from '../../services/fauna';
 import { getSession } from 'next-auth/react';
 import { stripe } from '../../services/stripe';
+
 
 // tipagem
 type User = {
@@ -14,11 +14,6 @@ type User = {
         stripe_customer_id: string
     }
 }
-=======
-import { getSession } from 'next-auth/react';
-import { stripe } from '../../services/stripe';
-
->>>>>>> e218f72ffa34985af87100f497ef1633d431b98e
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
     // verificar se o método da requisição é POST
@@ -26,7 +21,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         // sempre que estou criando algo o método é - POST
         
         const session = await getSession({ req })
-<<<<<<< HEAD
 
         const user = await fauna.query<User>(
             q.Get(
@@ -66,16 +60,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         const stripeCheckoutSession  = await stripe.checkout.sessions.create({
             // quems está comprando 
             customer: customerId,
-=======
-        const stripeCustomer = await stripe.customers.create({
-            email: session.user.email,
-            // metadata
-        })
-        
-        const stripeCheckoutSession  = await stripe.checkout.sessions.create({
-            // quems está comprando ?
-            customer: stripeCustomer.id,
->>>>>>> e218f72ffa34985af87100f497ef1633d431b98e
             
             // quais metodos de pagamento aceitar
             payment_method_types: ['card'],
@@ -92,13 +76,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         return res.status(200).json({ sessionId: stripeCheckoutSession.id })
 
     } else{
-        // se não for POST
-        res.setHeader('Allow', 'POST') // o método que a requisição aceita é POST
-        res.status(405).end('Method not allowed') // se não for POST - a resposta é método não permititdo
+        res.setHeader('Allow', 'POST')
+        res.status(405).end('Method not allowed') 
     }
-<<<<<<< HEAD
 }
 
-=======
-}
->>>>>>> e218f72ffa34985af87100f497ef1633d431b98e

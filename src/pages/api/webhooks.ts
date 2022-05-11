@@ -4,6 +4,7 @@ import { stripe } from "../../services/stripe";
 import Stripe from "stripe";
 import { saveSubscription } from "./_lib/menageSubscription";
 
+
 async function buffer(readble: Readable) {
   const chunks = []; // pedaços da stream
 
@@ -21,14 +22,19 @@ export const config = {
 };
 
 // quais eventos queremos ouvir
-const relevantEvents = new Set(["checkout.session.completed"]);
+const relevantEvents = new Set([
+  'checkout.session.completed',
+  'customer.subscription.created',
+  'customer.subscription.updated',
+  'customer.subscription.deleted',
+]);
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   // verfifiar metodo
-  if (req.method === "POST") {
+  if (req.method === 'POST') {
     // buf - é a requisição em si
     const buf = await buffer(req);
-    const secret = req.headers["stripe-signature"];
+    const secret = req.headers['stripe-signature'];
 
     let event: Stripe.Event;
 
@@ -47,28 +53,46 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     if (relevantEvents.has(type)) {
       try {
         switch (type) {
-          case "checkout.session.completed":
+          case 'customer.subscription.created':
+          case 'customer.subscription.updated':
+          case 'customer.subscription.deleted':
 
-          const checkoutSession = event.data.object as Stripe.Checkout.Session
+            const subscription = event.data.object as Stripe.Subscription;
 
-          await saveSubscription(
+            await saveSubscription (
+              subscription.id,
+              subscription.customer.toString(),
+              type === 'customer.subscription.created',
+            );
+
+            break;
+
+          case 'checkout.session.completed':
+
+           const checkoutSession = event.data.object as Stripe.Checkout.Session
+
+           await saveSubscription(
               checkoutSession.subscription.toString(),
-              checkoutSession.customer.toString()
+              checkoutSession.customer.toString(),
+              true
           )
 
             break;
           default:
-            throw new Error("unhandled event");
+            throw new Error('unhandled event');
         }
       } catch (err) {
-        return res.json({ error: "Webhook handler failed" });
+        console.log(err)
+        return res.status(400).json({ error: 'Webhook handler failed' });
       }
     }
 
     res.json({ received: true });
   } else {
-    res.setHeader("Allow", "POST");
-    res.status(405).end("Method not allowed");
+    console.log(req.method)
+
+    res.setHeader('Allow', 'POST');
+    res.status(400).end('Method not allowed');
   }
 };
 
