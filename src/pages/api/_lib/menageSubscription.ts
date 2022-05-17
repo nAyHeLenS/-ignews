@@ -39,15 +39,21 @@ export async function saveSubscription(
       )
   )
   */
+ console.log('Action', createAction)
 
   if (createAction) {
 
+   try{
     await fauna.query(
       q.Create(
         q.Collection('subscriptions'),
         { data: subscriptionData }
       )
     )
+    console.log('subscription criada')
+   } catch (err) {
+     console.log(err)
+   }
 
   } else {
     await fauna.query(

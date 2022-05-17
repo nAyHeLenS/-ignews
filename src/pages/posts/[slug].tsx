@@ -41,6 +41,18 @@ export default function Post({ post }: PostProps){
 
 export const getServerSideProps: GetServerSideProps = async  ({ req, params }) => {
     const session = await getSession({ req })
+    // console.log(session)
+
+    // se o usuário nçao tiver uma inscrição ativa
+    if(!session?.activeSubscription){
+        // redirecionamos ele 
+        return{
+            redirect: {
+                destination: '/',
+                permanent: false
+            }
+        }
+    }
 
     // carregar conteúdo do post
     const { slug } = params
